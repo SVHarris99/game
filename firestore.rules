@@ -22,13 +22,13 @@ service cloud.firestore {
         && request.resource.data.hostId == request.auth.uid
         && request.resource.data.phase == "lobby";
       allow update: if isPlayer(code);
-      allow delete: if false;
+      allow delete: if isHost(code);
 
       match /players/{playerId} {
         allow read: if isAuth();
         allow create: if isAuth() && (playerId == request.auth.uid || isHost(code));
         allow update: if isAuth() && (playerId == request.auth.uid || isHost(code));
-        allow delete: if isHost(code);
+        allow delete: if isAuth() && (playerId == request.auth.uid || isHost(code));
       }
 
       match /secrets/{playerId} {
