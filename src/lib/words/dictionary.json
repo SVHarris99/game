@@ -1,0 +1,37 @@
+{
+  "Animals": [
+    "Elephant", "Penguin", "Octopus", "Chameleon", "Flamingo",
+    "Narwhal", "Platypus", "Cheetah", "Armadillo", "Pangolin",
+    "Wolverine", "Toucan", "Manatee", "Gecko", "Bison"
+  ],
+  "Movies": [
+    "Inception", "Titanic", "Jaws", "Avatar", "Gladiator",
+    "Frozen", "Shrek", "Matrix", "Bambi", "Psycho",
+    "Ratatouille", "Ghostbusters", "Rocky", "Dumbo", "Beetlejuice"
+  ],
+  "Sports": [
+    "Badminton", "Cricket", "Fencing", "Archery", "Bobsled",
+    "Lacrosse", "Polo", "Rugby", "Curling", "Squash",
+    "Surfing", "Volleyball", "Wrestling", "Karate", "Sailing"
+  ],
+  "Furniture": [
+    "Ottoman", "Hammock", "Futon", "Wardrobe", "Bookshelf",
+    "Dresser", "Nightstand", "Recliner", "Credenza", "Armoire",
+    "Loveseat", "Vanity", "Hutch", "Chaise", "Stool"
+  ],
+  "Food": [
+    "Sushi", "Pretzel", "Dumpling", "Croissant", "Burrito",
+    "Paella", "Gumbo", "Tiramisu", "Ramen", "Waffle",
+    "Falafel", "Churro", "Bruschetta", "Fondue", "Empanada"
+  ],
+  "Geography": [
+    "Volcano", "Glacier", "Canyon", "Peninsula", "Archipelago",
+    "Tundra", "Fjord", "Delta", "Plateau", "Lagoon",
+    "Savanna", "Crater", "Oasis", "Atoll", "Steppe"
+  ],
+  "Science": [
+    "Nebula", "Photon", "Enzyme", "Quasar", "Genome",
+    "Neutron", "Osmosis", "Prism", "Catalyst", "Isotope",
+    "Magnet", "Plasma", "Fossil", "Eclipse", "Parasite"
+  ]
+}
