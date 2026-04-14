@@ -4,6 +4,7 @@ import { MotionConfig } from "framer-motion";
 import type { ReactNode } from "react";
 import { SfxProvider } from "@/lib/sfx/useSfx";
 import { MuteToggle } from "@/components/ui/MuteToggle";
+import { RoomControlsMenu } from "@/components/ui/RoomControlsMenu";
 
 export function GameShell({ children }: { children: ReactNode }) {
   return (
@@ -15,8 +16,9 @@ export function GameShell({ children }: { children: ReactNode }) {
             <span className="font-display font-bold text-lg sm:text-xl uppercase tracking-wide text-white/90">
               The Odd One Out
             </span>
-            <div id="shell-right" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <MuteToggle />
+              <RoomControlsMenu />
             </div>
           </header>
 
