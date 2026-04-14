@@ -1,11 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Trophy, ShieldAlert, RotateCcw, Home } from "lucide-react";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useGameActions } from "@/hooks/useGameActions";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { Button } from "@/components/ui/Button";
+import { Confetti } from "@/components/ui/Confetti";
+import { bouncySpring, spring } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 
 export function ResultsPhase() {
   const { room, players, isHost } = useRoomContext();
@@ -16,12 +18,6 @@ export function ResultsPhase() {
   const latestRound = room.roundHistory[room.roundHistory.length - 1];
   const imposter = players.find((p) => p.id === room.imposterId);
   const imposterCaught = latestRound?.imposterCaught ?? false;
-
-  // Tally votes for display
-  const voteTally: Record<string, number> = {};
-  for (const targetId of Object.values(room.votes)) {
-    voteTally[targetId] = (voteTally[targetId] || 0) + 1;
-  }
 
   // Sort players by score
   const sortedPlayers = [...players].sort(
@@ -36,165 +32,174 @@ export function ResultsPhase() {
     await backToLobby(room.code);
   };
 
+  const stampRotation = imposterCaught ? -6 : 8;
+  const stampBg = imposterCaught
+    ? "var(--color-bright-teal)"
+    : "var(--color-paper)";
+  const stampColor = "var(--color-ink)";
+  const stampText = imposterCaught ? "Insiders Win!" : "Escaped!";
+
   return (
-    <div className="flex-1 flex flex-col items-center">
-      {/* Win announcement */}
+    <div className="flex-1 flex flex-col items-center w-full overflow-hidden">
+      <Confetti trigger={imposterCaught} />
+
+      {/* Rubber-stamp reveal */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", duration: 0.8 }}
-        className="text-center mb-6"
+        initial={{ scale: 3, rotate: -30, opacity: 0 }}
+        animate={{ scale: 1, rotate: stampRotation, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 18 }}
+        className="mb-8 mt-2 px-8 py-5 sticker-border-thick sticker-shadow-lg rounded-2xl"
+        style={{ backgroundColor: stampBg }}
       >
-        {imposterCaught ? (
-          <>
-            <Trophy className="w-14 h-14 text-gold mx-auto mb-3" />
-            <h2 className="text-3xl font-bold text-bright-teal">
-              Insiders Win!
-            </h2>
-            <p className="text-white/50 mt-1">The imposter was caught</p>
-          </>
-        ) : (
-          <>
-            <ShieldAlert className="w-14 h-14 text-danger mx-auto mb-3" />
-            <h2 className="text-3xl font-bold text-danger">Imposter Wins!</h2>
-            <p className="text-white/50 mt-1">
-              The imposter got away with it
-            </p>
-          </>
-        )}
+        <h2
+          className="font-display font-bold uppercase text-4xl sm:text-5xl tracking-tight"
+          style={{ color: stampColor }}
+        >
+          {stampText}
+        </h2>
       </motion.div>
 
-      {/* Reveal */}
+      {/* Word reveal */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="w-full max-w-sm bg-purple-mid/50 rounded-2xl p-4 mb-4 text-center"
+        initial={{ opacity: 0, scale: 0, rotate: -8 }}
+        animate={{ opacity: 1, scale: 1, rotate: -2 }}
+        transition={{ ...bouncySpring, delay: 0.4 }}
+        className="mb-6 px-6 py-4 bg-sticker-yellow sticker-border-thick sticker-shadow rounded-2xl text-center max-w-xs"
+        style={{ color: "var(--color-ink)" }}
       >
-        <p className="text-sm text-white/40">The word was</p>
-        <p className="text-2xl font-bold text-bright-teal">
+        <p className="font-display font-semibold text-xs uppercase tracking-wide opacity-70">
+          The word was
+        </p>
+        <p className="font-display font-bold text-3xl sm:text-4xl uppercase mt-1 break-words">
           {room.currentWord}
         </p>
-        <p className="text-sm text-white/40 mt-2">The imposter was</p>
-        <div className="flex items-center justify-center gap-2 mt-1">
-          {imposter && (
-            <PlayerAvatar
-              name={imposter.name}
-              color={imposter.avatarColor}
-              size="sm"
-            />
-          )}
-          <span className="text-lg font-bold text-danger">
-            {imposter?.name ?? "Unknown"}
-          </span>
-        </div>
       </motion.div>
 
-      {/* Vote results */}
+      {/* Imposter reveal */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="w-full max-w-sm mb-4"
+        transition={{ ...spring, delay: 0.7 }}
+        className="mb-8 flex flex-col items-center"
       >
-        <p className="text-sm text-white/40 mb-2">Vote Results</p>
-        <div className="space-y-1.5">
-          {players.map((player) => {
-            const votes = voteTally[player.id] || 0;
-            const isImposter = player.id === room.imposterId;
-            return (
-              <div
-                key={player.id}
-                className={`flex items-center gap-3 px-3 py-2 rounded-xl ${
-                  isImposter ? "bg-danger/10 border border-danger/30" : "bg-purple-mid/30"
-                }`}
-              >
-                <PlayerAvatar
-                  name={player.name}
-                  color={player.avatarColor}
-                  size="sm"
-                />
-                <span className="text-sm">{player.name}</span>
-                {isImposter && (
-                  <ShieldAlert className="w-3.5 h-3.5 text-danger" />
-                )}
-                <span className="ml-auto font-bold tabular-nums">
-                  {votes} vote{votes !== 1 ? "s" : ""}
-                </span>
-                {latestRound && (
-                  <span
-                    className={`text-xs font-bold ${
-                      (latestRound.scoreDeltas[player.id] || 0) > 0
-                        ? "text-gold"
-                        : "text-white/20"
-                    }`}
-                  >
-                    +{latestRound.scoreDeltas[player.id] || 0}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+        <p className="font-display font-semibold text-sm text-white/60 uppercase tracking-wide mb-2">
+          The imposter
+        </p>
+        <div className="relative">
+          {imposter && (
+            <div className="scale-150 mb-2">
+              <PlayerAvatar
+                name={imposter.name}
+                color={imposter.avatarColor}
+                size="lg"
+              />
+            </div>
+          )}
+          <motion.div
+            initial={{ scale: 0, rotate: -40, opacity: 0 }}
+            animate={{ scale: 1, rotate: -18, opacity: 1 }}
+            transition={{
+              type: "spring",
+              stiffness: 320,
+              damping: 16,
+              delay: 1.0,
+            }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          >
+            <span
+              className={cn(
+                "font-display font-bold uppercase text-lg sm:text-xl px-3 py-1 border-[3px] rounded-md",
+                imposterCaught
+                  ? "bg-danger text-white border-white"
+                  : "bg-bright-teal text-ink border-ink"
+              )}
+            >
+              {imposterCaught ? "Caught!" : "Escaped"}
+            </span>
+          </motion.div>
         </div>
+        <p className="font-display font-bold text-2xl mt-4 text-white">
+          {imposter?.name ?? "Unknown"}
+        </p>
       </motion.div>
 
       {/* Scoreboard */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.1 }}
+        transition={{ ...spring, delay: 1.2 }}
         className="w-full max-w-sm mb-6"
       >
-        <p className="text-sm text-white/40 mb-2">Scoreboard</p>
-        <div className="space-y-1.5">
-          {sortedPlayers.map((player, i) => (
-            <div
-              key={player.id}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl bg-purple-mid/20"
-            >
-              <span
-                className={`text-sm font-bold w-5 text-center ${
-                  i === 0 ? "text-gold" : "text-white/30"
-                }`}
+        <p className="font-display font-semibold text-xs uppercase tracking-wide text-white/60 mb-2 text-center">
+          Scoreboard
+        </p>
+        <div className="space-y-2">
+          {sortedPlayers.map((player, i) => {
+            const isFirst = i === 0;
+            return (
+              <motion.div
+                key={player.id}
+                initial={{ opacity: 0, x: -20, rotate: -4 }}
+                animate={{ opacity: 1, x: 0, rotate: 0 }}
+                transition={{ ...spring, delay: 1.3 + i * 0.06 }}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-2xl sticker-border-thick sticker-shadow-sm",
+                  isFirst && "tilt-left"
+                )}
+                style={{
+                  backgroundColor: isFirst
+                    ? "var(--color-gold)"
+                    : "var(--color-purple-mid)",
+                  color: isFirst ? "var(--color-ink)" : "#fff",
+                }}
               >
-                {i + 1}
-              </span>
-              <PlayerAvatar
-                name={player.name}
-                color={player.avatarColor}
-                size="sm"
-              />
-              <span className="text-sm">{player.name}</span>
-              <span className="ml-auto font-bold text-bright-teal tabular-nums">
-                {room.scores[player.id] || 0}
-              </span>
-            </div>
-          ))}
+                <span className="font-display font-bold text-lg w-6 text-center">
+                  {isFirst ? "👑" : i + 1}
+                </span>
+                <PlayerAvatar
+                  name={player.name}
+                  color={player.avatarColor}
+                  size="sm"
+                />
+                <span className="font-display font-bold text-base truncate">
+                  {player.name}
+                </span>
+                <span className="ml-auto font-display font-bold tabular-nums text-lg">
+                  {room.scores[player.id] || 0}
+                </span>
+              </motion.div>
+            );
+          })}
         </div>
       </motion.div>
 
       {/* Actions */}
       {isHost && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.6 }}
           className="w-full max-w-sm flex gap-3"
         >
-          <Button variant="secondary" className="flex-1" onClick={handleBackToLobby}>
-            <Home className="w-4 h-4 mr-2 inline" />
+          <Button
+            variant="secondary"
+            className="flex-1 font-display font-bold uppercase"
+            onClick={handleBackToLobby}
+          >
             Lobby
           </Button>
-          <Button className="flex-1" onClick={handlePlayAgain}>
-            <RotateCcw className="w-4 h-4 mr-2 inline" />
+          <Button
+            className="flex-1 font-display font-bold uppercase"
+            onClick={handlePlayAgain}
+          >
             Play Again
           </Button>
         </motion.div>
       )}
 
       {!isHost && (
-        <p className="text-white/30 text-sm mt-4">
-          Waiting for host...
+        <p className="font-display font-semibold text-white/50 text-sm mt-4">
+          Waiting for host…
         </p>
       )}
     </div>
