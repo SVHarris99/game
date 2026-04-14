@@ -1,11 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk } from "next/font/google";
+import { Fredoka, Space_Grotesk } from "next/font/google";
 import { AuthProvider } from "@/providers/AuthProvider";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const fredoka = Fredoka({
+  variable: "--font-fredoka",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -34,8 +41,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-deep-purple text-white font-sans">
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${fredoka.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-confetti text-white font-sans">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

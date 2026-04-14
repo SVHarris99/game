@@ -10,13 +10,62 @@
   --color-gold: #ffd700;
   --color-surface: #0f0220;
   --color-surface-elevated: #1e0a3c;
+
+  /* Sticker accent palette */
+  --color-sticker-pink: #ff5cb8;
+  --color-sticker-blue: #4cc9f0;
+  --color-sticker-yellow: #ffd23f;
+  --color-sticker-lime: #b8f84b;
+  --color-sticker-orange: #ff8c42;
+  --color-sticker-violet: #a855f7;
+
+  /* Sticker structural */
+  --color-ink: #0a0014;
+  --color-paper: #fff8e7;
+
   --font-sans: var(--font-space-grotesk);
+  --font-body: var(--font-space-grotesk);
+  --font-display: var(--font-fredoka);
 }
 
 body {
-  background: var(--color-deep-purple);
   color: #ededed;
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+/* Sticker shadow — chunky, no blur */
+.sticker-shadow { box-shadow: 6px 6px 0 var(--color-ink); }
+.sticker-shadow-sm { box-shadow: 4px 4px 0 var(--color-ink); }
+.sticker-shadow-lg { box-shadow: 8px 8px 0 var(--color-ink); }
+
+/* Thick ink outline */
+.sticker-border { border: 3px solid var(--color-ink); }
+.sticker-border-thick { border: 4px solid var(--color-ink); }
+
+/* Subtle tilts — additive, compose with transforms via CSS variable */
+.tilt-left  { --tilt: -2deg; transform: rotate(var(--tilt)); }
+.tilt-right { --tilt:  2deg; transform: rotate(var(--tilt)); }
+.tilt-lean  { --tilt: -4deg; transform: rotate(var(--tilt)); }
+
+/* Press-down state (compose with sticker-shadow) */
+.sticker-press { transition: transform 80ms ease-out, box-shadow 80ms ease-out; }
+.sticker-press:active { transform: translate(4px, 4px); box-shadow: 2px 2px 0 var(--color-ink); }
+
+/* Dotted/confetti bg pattern on body */
+.bg-confetti {
+  background-color: var(--color-deep-purple);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 92, 184, 0.08) 1.5px, transparent 2px),
+    radial-gradient(circle at 70% 60%, rgba(76, 201, 240, 0.08) 1.5px, transparent 2px),
+    radial-gradient(circle at 40% 85%, rgba(255, 210, 63, 0.08) 1.5px, transparent 2px);
+  background-size: 180px 180px, 240px 240px, 200px 200px;
+  background-position: 0 0, 60px 30px, 120px 80px;
+}
+
+/* Reduced-motion guard — skip tilts + press when user prefers */
+@media (prefers-reduced-motion: reduce) {
+  .tilt-left, .tilt-right, .tilt-lean { transform: none; }
+  .sticker-press:active { transform: none; }
 }
 
 /* Custom scrollbar for the party theme */
