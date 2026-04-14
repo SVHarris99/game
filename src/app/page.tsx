@@ -3,12 +3,46 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Users } from "lucide-react";
+import { Play, CornerDownLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/providers/AuthProvider";
 import { useGameActions } from "@/hooks/useGameActions";
+import { bouncySpring, spring } from "@/lib/motion";
+
+const floatingDoodles: Array<{
+  emoji: string;
+  className: string;
+  rotate: number;
+  delay: number;
+}> = [
+  {
+    emoji: "🎉",
+    className: "top-6 left-4 sm:top-10 sm:left-10 text-5xl sm:text-6xl",
+    rotate: -12,
+    delay: 0,
+  },
+  {
+    emoji: "🎲",
+    className: "top-10 right-4 sm:top-16 sm:right-12 text-5xl sm:text-6xl",
+    rotate: 14,
+    delay: 0.6,
+  },
+  {
+    emoji: "🎤",
+    className: "bottom-10 left-6 sm:bottom-16 sm:left-14 text-5xl sm:text-6xl",
+    rotate: 8,
+    delay: 1.2,
+  },
+  {
+    emoji: "🎯",
+    className:
+      "bottom-6 right-6 sm:bottom-12 sm:right-16 text-5xl sm:text-6xl",
+    rotate: -10,
+    delay: 1.8,
+  },
+];
 
 export default function LandingPage() {
   const { user, loading: authLoading } = useAuth();
@@ -63,41 +97,79 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+    <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-8 overflow-hidden">
+      {/* Floating emoji doodles */}
+      {floatingDoodles.map((d) => (
+        <motion.div
+          key={d.emoji}
+          aria-hidden
+          className={`pointer-events-none select-none absolute ${d.className}`}
+          style={{ rotate: d.rotate }}
+          initial={{ y: 0 }}
+          animate={{ y: [0, -10, 0] }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: d.delay,
+          }}
+        >
+          {d.emoji}
+        </motion.div>
+      ))}
+
+      {/* Hero sticker card */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-10"
+        initial={{ scale: 0, rotate: -8 }}
+        animate={{ scale: 1, rotate: -2 }}
+        transition={bouncySpring}
+        className="relative z-10 w-full max-w-md mb-10"
       >
-        <h1 className="text-5xl font-bold mb-2">
-          <span className="text-bright-teal">The Odd</span>{" "}
-          <span className="text-white">One Out</span>
-        </h1>
-        <p className="text-white/50 text-lg">Find the imposter among you</p>
+        <Card
+          variant="sticker"
+          tilt="left"
+          className="sticker-shadow-lg text-center"
+          style={{ backgroundColor: "var(--color-sticker-violet)" }}
+        >
+          <h1 className="font-display font-bold uppercase text-4xl sm:text-5xl leading-[0.95] tracking-tight text-white drop-shadow-[3px_3px_0_var(--color-ink)]">
+            The Odd
+            <br />
+            One Out
+          </h1>
+          <p className="mt-4 text-white/90 font-display font-medium text-base sm:text-lg">
+            a sneaky little party game
+          </p>
+        </Card>
       </motion.div>
 
-      <div className="w-full max-w-sm">
+      {/* Actions */}
+      <div className="relative z-10 w-full max-w-md">
         <AnimatePresence mode="wait">
           {mode === "idle" && (
             <motion.div
               key="idle"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="flex flex-col gap-4"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={spring}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Button size="lg" className="w-full" onClick={() => setMode("create")}>
-                <Sparkles className="w-5 h-5 mr-2 inline" />
-                Create Game
+              <Button
+                size="lg"
+                className="flex-1 inline-flex items-center justify-center gap-2"
+                onClick={() => setMode("create")}
+              >
+                <Play className="w-5 h-5" fill="currentColor" />
+                NEW ROOM
               </Button>
               <Button
                 variant="secondary"
                 size="lg"
-                className="w-full"
+                className="flex-1 inline-flex items-center justify-center gap-2"
                 onClick={() => setMode("join")}
               >
-                <Users className="w-5 h-5 mr-2 inline" />
-                Join Game
+                <CornerDownLeft className="w-5 h-5" />
+                JOIN ROOM
               </Button>
             </motion.div>
           )}
@@ -105,25 +177,24 @@ export default function LandingPage() {
           {mode === "create" && (
             <motion.div
               key="create"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={spring}
             >
-              <Card variant="elevated" className="space-y-4">
-                <h2 className="text-xl font-bold text-bright-teal">
-                  Create Game
+              <Card variant="sticker" tilt="right" className="space-y-4">
+                <h2 className="font-display font-bold text-2xl text-bright-teal">
+                  NEW ROOM
                 </h2>
                 <Input
-                  label="Your Nickname"
+                  label="Your nickname"
                   placeholder="Enter your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={16}
                   autoFocus
                 />
-                {error && (
-                  <p className="text-danger text-sm">{error}</p>
-                )}
+                {error && <p className="text-danger text-sm">{error}</p>}
                 <div className="flex gap-3">
                   <Button
                     variant="ghost"
@@ -139,7 +210,7 @@ export default function LandingPage() {
                     onClick={handleCreate}
                     disabled={!name.trim() || submitting}
                   >
-                    {submitting ? "Creating..." : "Create Room"}
+                    {submitting ? "Creating..." : "Create"}
                   </Button>
                 </div>
               </Card>
@@ -149,35 +220,50 @@ export default function LandingPage() {
           {mode === "join" && (
             <motion.div
               key="join"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={spring}
             >
-              <Card variant="elevated" className="space-y-4">
-                <h2 className="text-xl font-bold text-bright-teal">
-                  Join Game
+              <Card variant="sticker" tilt="right" className="space-y-4">
+                <h2 className="font-display font-bold text-2xl text-bright-teal">
+                  JOIN ROOM
                 </h2>
                 <Input
-                  label="Your Nickname"
+                  label="Your nickname"
                   placeholder="Enter your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={16}
                   autoFocus
                 />
-                <Input
-                  label="Room Code"
-                  placeholder="ABCD"
-                  value={roomCode}
-                  onChange={(e) =>
-                    setRoomCode(e.target.value.toUpperCase().slice(0, 4))
-                  }
-                  maxLength={4}
-                  className="text-center text-2xl tracking-[0.3em] uppercase"
-                />
-                {error && (
-                  <p className="text-danger text-sm">{error}</p>
-                )}
+                <div className="flex gap-2 items-end">
+                  <Input
+                    label="Room code"
+                    placeholder="ABCD"
+                    value={roomCode}
+                    onChange={(e) =>
+                      setRoomCode(e.target.value.toUpperCase().slice(0, 4))
+                    }
+                    maxLength={4}
+                    className="text-center text-2xl tracking-[0.3em] uppercase font-display"
+                  />
+                  <Button
+                    onClick={handleJoin}
+                    disabled={
+                      !name.trim() || roomCode.length !== 4 || submitting
+                    }
+                    className="shrink-0 inline-flex items-center gap-1"
+                    aria-label="Go"
+                  >
+                    {submitting ? "..." : (
+                      <>
+                        GO <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {error && <p className="text-danger text-sm">{error}</p>}
                 <div className="flex gap-3">
                   <Button
                     variant="ghost"
@@ -187,15 +273,6 @@ export default function LandingPage() {
                     }}
                   >
                     Back
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={handleJoin}
-                    disabled={
-                      !name.trim() || roomCode.length !== 4 || submitting
-                    }
-                  >
-                    {submitting ? "Joining..." : "Join Room"}
                   </Button>
                 </div>
               </Card>

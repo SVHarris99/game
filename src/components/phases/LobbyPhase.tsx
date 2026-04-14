@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Copy, Check, Users } from "lucide-react";
+import { Play } from "lucide-react";
 import { useState } from "react";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useGameActions } from "@/hooks/useGameActions";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { bouncySpring } from "@/lib/motion";
 
 export function LobbyPhase() {
   const { room, players, isHost } = useRoomContext();
@@ -20,9 +21,13 @@ export function LobbyPhase() {
   const canStart = players.length >= 3;
 
   const handleCopyCode = async () => {
-    await navigator.clipboard.writeText(room.code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(room.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch (err) {
+      console.error("Failed to copy code:", err);
+    }
   };
 
   const handleStart = async () => {
@@ -37,55 +42,78 @@ export function LobbyPhase() {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center">
-      {/* Room code display */}
-      <Card variant="elevated" className="w-full max-w-sm text-center mb-6">
-        <p className="text-sm text-white/40 mb-2">Share this code</p>
-        <button
+    <div className="flex-1 flex flex-col items-center w-full">
+      {/* Room code sticker card */}
+      <motion.div
+        initial={{ scale: 0, rotate: 8 }}
+        animate={{ scale: 1, rotate: 2 }}
+        transition={bouncySpring}
+        className="w-full max-w-sm mb-10"
+      >
+        <Card
+          variant="sticker"
+          tilt="right"
+          role="button"
+          tabIndex={0}
+          aria-label={`Room code ${room.code}. Tap to copy.`}
           onClick={handleCopyCode}
-          className="flex items-center justify-center gap-3 mx-auto group"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleCopyCode();
+            }
+          }}
+          className="sticker-shadow-lg sticker-press cursor-pointer text-center"
+          style={{
+            backgroundColor: "var(--color-paper)",
+            color: "var(--color-ink)",
+          }}
         >
-          <span className="text-5xl font-bold tracking-[0.4em] text-bright-teal font-mono">
+          <p className="font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.25em] text-ink/70">
+            Room Code
+          </p>
+          <p className="font-display font-bold text-6xl sm:text-7xl tracking-[0.2em] mt-2 leading-none">
             {room.code}
-          </span>
-          {copied ? (
-            <Check className="w-5 h-5 text-bright-teal" />
-          ) : (
-            <Copy className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
-          )}
-        </button>
-      </Card>
+          </p>
+          <p className="mt-3 text-xs sm:text-sm font-medium text-ink/60">
+            {copied ? "copied!" : "(tap to copy)"}
+          </p>
+        </Card>
+      </motion.div>
 
-      {/* Player list */}
-      <div className="w-full max-w-sm mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Users className="w-4 h-4 text-white/40" />
-          <span className="text-sm text-white/40">
-            Players ({players.length})
+      {/* Players grid */}
+      <div className="w-full max-w-md mb-8">
+        <div className="flex items-baseline gap-2 mb-4 px-1">
+          <span className="font-display font-semibold text-lg text-white">
+            Players
           </span>
+          <span className="text-sm text-white/50">({players.length}/8)</span>
           {!canStart && (
-            <span className="text-xs text-white/20 ml-auto">
-              Need {3 - players.length} more
+            <span className="ml-auto text-xs text-white/40">
+              need {3 - players.length} more
             </span>
           )}
         </div>
-        <div className="space-y-2">
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
           {players.map((player, i) => (
             <motion.div
               key={player.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-purple-mid/50"
+              initial={{ scale: 0, rotate: -8, opacity: 0 }}
+              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+              transition={{ ...bouncySpring, delay: i * 0.06 }}
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-purple-light sticker-border sticker-shadow-sm"
             >
               <PlayerAvatar
                 name={player.name}
                 color={player.avatarColor}
-                size="sm"
+                size="md"
+                tilt
               />
-              <span className="font-medium">{player.name}</span>
+              <span className="font-display font-semibold text-sm text-white text-center truncate max-w-full">
+                {player.name}
+              </span>
               {player.isHost && (
-                <span className="text-xs text-bright-teal bg-bright-teal/10 px-2 py-0.5 rounded-full ml-auto">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-ink bg-bright-teal px-2 py-0.5 rounded-full">
                   Host
                 </span>
               )}
@@ -94,24 +122,34 @@ export function LobbyPhase() {
         </div>
       </div>
 
-      {/* Waiting message or start button */}
+      {/* Start button / waiting state */}
       <div className="w-full max-w-sm mt-auto">
         {isHost ? (
           <Button
             size="lg"
-            className="w-full"
+            className="w-full inline-flex items-center justify-center gap-2 text-xl"
             onClick={handleStart}
             disabled={!canStart || starting}
           >
+            <Play className="w-6 h-6" fill="currentColor" />
             {starting
-              ? "Starting..."
+              ? "STARTING..."
               : canStart
-                ? "Start Game"
-                : `Need ${3 - players.length} more player${3 - players.length > 1 ? "s" : ""}`}
+                ? "START GAME"
+                : `NEED ${3 - players.length} MORE`}
           </Button>
         ) : (
-          <p className="text-center text-white/40">
-            Waiting for host to start the game...
+          <p className="text-center font-display font-medium text-white/70 text-lg">
+            waiting for the host
+            <motion.span
+              aria-hidden
+              className="inline-block"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 1, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity, times: [0, 0.2, 0.8, 1] }}
+            >
+              …
+            </motion.span>
           </p>
         )}
       </div>
