@@ -9,6 +9,7 @@ import { CluePhase } from "@/components/phases/CluePhase";
 import { DiscussionPhase } from "@/components/phases/DiscussionPhase";
 import { VotingPhase } from "@/components/phases/VotingPhase";
 import { ResultsPhase } from "@/components/phases/ResultsPhase";
+import { RoundIntermissionPhase } from "@/components/phases/RoundIntermissionPhase";
 import { useSfx } from "@/lib/sfx/useSfx";
 
 export function PhaseRouter() {
@@ -43,6 +44,7 @@ export function PhaseRouter() {
         {room.phase === "discussion" && <DiscussionPhase />}
         {room.phase === "voting" && <VotingPhase />}
         {room.phase === "results" && <ResultsPhase />}
+        {room.phase === "roundIntermission" && <RoundIntermissionPhase />}
       </motion.div>
     </AnimatePresence>
   );

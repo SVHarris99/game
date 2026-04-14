@@ -13,16 +13,20 @@ import { useSfx } from "@/lib/sfx/useSfx";
 
 export function ResultsPhase() {
   const { room, players, isHost } = useRoomContext();
-  const { playAgain, backToLobby } = useGameActions();
+  const { playAgain, backToLobby, advanceToRound2, advanceToRound3 } =
+    useGameActions();
   const { play } = useSfx();
   const playedRef = useRef(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionPending, setActionPending] = useState<
-    "playAgain" | "lobby" | null
+    "playAgain" | "lobby" | "nextRound" | null
   >(null);
 
   const latestRound = room?.roundHistory[room.roundHistory.length - 1];
   const imposterCaught = latestRound?.imposterCaught ?? false;
+  // Default to `true` until the field exists — preserves R1-only legacy behavior.
+  const isFinalResults = room?.isFinalResults ?? true;
+  const currentRoundNumber = room?.roundNumber ?? 1;
 
   useEffect(() => {
     if (!room) return;
@@ -55,6 +59,28 @@ export function ResultsPhase() {
     }
   };
 
+  const handleStartNextRound = async () => {
+    if (!room) return;
+    setActionError(null);
+    setActionPending("nextRound");
+    try {
+      if (currentRoundNumber === 1) {
+        await advanceToRound2(room.code);
+      } else if (currentRoundNumber === 2) {
+        await advanceToRound3(room.code);
+      } else {
+        throw new Error("No next round available.");
+      }
+    } catch (err) {
+      console.error("advance to next round failed", err);
+      const msg =
+        err instanceof Error ? err.message : "Could not start the next round.";
+      setActionError(msg);
+    } finally {
+      setActionPending(null);
+    }
+  };
+
   const handleBackToLobby = async () => {
     setActionError(null);
     setActionPending("lobby");
@@ -75,7 +101,13 @@ export function ResultsPhase() {
     ? "var(--color-bright-teal)"
     : "var(--color-paper)";
   const stampColor = "var(--color-ink)";
-  const stampText = imposterCaught ? "Insiders Win!" : "Escaped!";
+  const stampText = isFinalResults
+    ? imposterCaught
+      ? "Insiders Win!"
+      : imposterCaught === false && currentRoundNumber >= 3
+        ? "Imposter Wins!"
+        : "Escaped!"
+    : `Round ${currentRoundNumber} — Imposter Escaped`;
 
   return (
     <div className="flex-1 flex flex-col items-center w-full overflow-hidden">
@@ -219,23 +251,37 @@ export function ResultsPhase() {
           transition={{ delay: 1.6 }}
           className="w-full max-w-sm flex flex-col gap-2"
         >
-          <div className="flex gap-3">
+          {isFinalResults ? (
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                className="flex-1 font-display font-bold uppercase"
+                onClick={handleBackToLobby}
+                disabled={actionPending !== null}
+              >
+                {actionPending === "lobby" ? "Returning…" : "Lobby"}
+              </Button>
+              <Button
+                className="flex-1 font-display font-bold uppercase"
+                onClick={handlePlayAgain}
+                disabled={actionPending !== null}
+              >
+                {actionPending === "playAgain" ? "Starting…" : "Play Again"}
+              </Button>
+            </div>
+          ) : (
             <Button
-              variant="secondary"
-              className="flex-1 font-display font-bold uppercase"
-              onClick={handleBackToLobby}
+              className="w-full font-display font-bold uppercase"
+              onClick={handleStartNextRound}
               disabled={actionPending !== null}
             >
-              {actionPending === "lobby" ? "Returning…" : "Lobby"}
+              {actionPending === "nextRound"
+                ? "Starting…"
+                : currentRoundNumber === 1
+                  ? "Start Round 2"
+                  : "Start Round 3"}
             </Button>
-            <Button
-              className="flex-1 font-display font-bold uppercase"
-              onClick={handlePlayAgain}
-              disabled={actionPending !== null}
-            >
-              {actionPending === "playAgain" ? "Starting…" : "Play Again"}
-            </Button>
-          </div>
+          )}
           {actionError && (
             <p
               role="alert"

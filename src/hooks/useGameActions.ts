@@ -161,6 +161,10 @@ export function useGameActions() {
         imposterId: "", // Hidden until results
         roundNumber: (room?.roundNumber ?? 0) + 1,
         status: "active",
+        isFinalResults: false,
+        round3Prompts: [],
+        round3Pointings: {},
+        round3CurrentPromptIndex: 0,
       });
 
       await batch.commit();
@@ -310,6 +314,10 @@ export function useGameActions() {
         scoreDeltas: deltas,
       };
 
+      // Game ends when: insiders catch the imposter in any round, OR
+      // the imposter survives all 3 rounds (imposter wins).
+      const isFinalResults = imposterCaught || room.roundNumber >= 3;
+
       await updateDoc(roomRef(roomCode), {
         phase: "results",
         phaseStartedAt: serverTimestamp(),
@@ -318,6 +326,7 @@ export function useGameActions() {
         votingComplete: true,
         scores: newScores,
         roundHistory: [...room.roundHistory, roundResult],
+        isFinalResults,
       });
     },
     []

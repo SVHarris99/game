@@ -36,6 +36,7 @@ export function CluePhase() {
   const debug = useDebug();
   const [clue, setClue] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [repeatError, setRepeatError] = useState<string | null>(null);
 
   const activePlayerId = room?.turnOrder[room.currentTurnIndex];
   const currentIsBot = !!activePlayerId && isBot(activePlayerId);
@@ -73,15 +74,24 @@ export function CluePhase() {
     const trimmed = clue.trim();
     if (trimmed.includes(" ")) return;
     setSubmitting(true);
+    setRepeatError(null);
     try {
       await submitClue(room.code, user.uid, trimmed);
       setClue("");
     } catch (err) {
       console.error("Failed to submit clue:", err);
+      const msg = err instanceof Error ? err.message : "Could not send clue.";
+      if (/reuse/i.test(msg)) {
+        setRepeatError(msg);
+      } else {
+        setRepeatError(msg);
+      }
     } finally {
       setSubmitting(false);
     }
   };
+
+  const isR2 = room?.roundNumber === 2;
 
   // Only render clues that have been submitted, in turn order.
   const submittedEntries = room.turnOrder
@@ -168,36 +178,67 @@ export function CluePhase() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex gap-2 items-stretch"
+          className="flex flex-col gap-2"
         >
-          <Input
-            placeholder="One word clue..."
-            value={clue}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\s/g, "");
-              setClue(val);
-            }}
-            maxLength={20}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSubmit();
-            }}
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={!clue.trim() || submitting}
-            aria-label="Send clue"
-            className={cn(
-              "shrink-0 flex items-center gap-2 px-5 rounded-2xl",
-              "bg-bright-teal text-ink font-display font-bold uppercase",
-              "sticker-border sticker-shadow-sm sticker-press",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-bright-teal/50"
-            )}
-          >
-            <Send className="w-5 h-5" />
-            <span>Send</span>
-          </button>
+          {isR2 && (
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-flex items-center font-display font-bold uppercase text-xs tracking-wide px-2.5 py-1 rounded-full sticker-border"
+                style={{
+                  backgroundColor: "var(--color-sticker-pink)",
+                  color: "var(--color-ink)",
+                }}
+              >
+                No Repeat
+              </span>
+              <span className="font-display font-medium text-white/70 text-xs">
+                Can&rsquo;t reuse your Round 1 clue.
+              </span>
+            </div>
+          )}
+          <div className="flex gap-2 items-stretch">
+            <Input
+              placeholder={isR2 ? "Fresh one-word clue..." : "One word clue..."}
+              value={clue}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\s/g, "");
+                setClue(val);
+                if (repeatError) setRepeatError(null);
+              }}
+              maxLength={20}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+            />
+            <button
+              onClick={handleSubmit}
+              disabled={!clue.trim() || submitting}
+              aria-label="Send clue"
+              className={cn(
+                "shrink-0 flex items-center gap-2 px-5 rounded-2xl",
+                "bg-bright-teal text-ink font-display font-bold uppercase",
+                "sticker-border sticker-shadow-sm sticker-press",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+                "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-bright-teal/50"
+              )}
+            >
+              <Send className="w-5 h-5" />
+              <span>Send</span>
+            </button>
+          </div>
+          {repeatError && (
+            <p
+              role="alert"
+              className="font-display font-semibold text-sm px-3 py-2 rounded-lg"
+              style={{
+                backgroundColor: "rgba(239, 68, 68, 0.15)",
+                color: "#fecaca",
+              }}
+            >
+              {repeatError}
+            </p>
+          )}
         </motion.div>
       )}
 
