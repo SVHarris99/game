@@ -35,7 +35,9 @@ service cloud.firestore {
         // CRITICAL: Each player can ONLY read their own secret
         allow read: if isAuth() && playerId == request.auth.uid;
         allow create: if isHost(code);
-        allow update: if false;
+        // Host can update (needed for atomic playAgain: delete+set in one batch
+        // is evaluated by rules as update since the doc exists pre-batch).
+        allow update: if isHost(code);
         allow delete: if isHost(code);
       }
     }
