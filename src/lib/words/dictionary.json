@@ -1,37 +1,134 @@
 {
-  "Animals": [
-    "Elephant", "Penguin", "Octopus", "Chameleon", "Flamingo",
-    "Narwhal", "Platypus", "Cheetah", "Armadillo", "Pangolin",
-    "Wolverine", "Toucan", "Manatee", "Gecko", "Bison"
-  ],
-  "Movies": [
-    "Inception", "Titanic", "Jaws", "Avatar", "Gladiator",
-    "Frozen", "Shrek", "Matrix", "Bambi", "Psycho",
-    "Ratatouille", "Ghostbusters", "Rocky", "Dumbo", "Beetlejuice"
-  ],
-  "Sports": [
-    "Badminton", "Cricket", "Fencing", "Archery", "Bobsled",
-    "Lacrosse", "Polo", "Rugby", "Curling", "Squash",
-    "Surfing", "Volleyball", "Wrestling", "Karate", "Sailing"
-  ],
-  "Furniture": [
-    "Ottoman", "Hammock", "Futon", "Wardrobe", "Bookshelf",
-    "Dresser", "Nightstand", "Recliner", "Credenza", "Armoire",
-    "Loveseat", "Vanity", "Hutch", "Chaise", "Stool"
-  ],
-  "Food": [
-    "Sushi", "Pretzel", "Dumpling", "Croissant", "Burrito",
-    "Paella", "Gumbo", "Tiramisu", "Ramen", "Waffle",
-    "Falafel", "Churro", "Bruschetta", "Fondue", "Empanada"
-  ],
-  "Geography": [
-    "Volcano", "Glacier", "Canyon", "Peninsula", "Archipelago",
-    "Tundra", "Fjord", "Delta", "Plateau", "Lagoon",
-    "Savanna", "Crater", "Oasis", "Atoll", "Steppe"
-  ],
-  "Science": [
-    "Nebula", "Photon", "Enzyme", "Quasar", "Genome",
-    "Neutron", "Osmosis", "Prism", "Catalyst", "Isotope",
-    "Magnet", "Plasma", "Fossil", "Eclipse", "Parasite"
-  ]
+  "Animals": {
+    "emoji": "🦁",
+    "words": [
+      "Elephant", "Penguin", "Octopus", "Chameleon", "Flamingo",
+      "Narwhal", "Platypus", "Cheetah", "Armadillo", "Pangolin",
+      "Wolverine", "Toucan", "Manatee", "Gecko", "Bison",
+      "Giraffe", "Kangaroo", "Dolphin", "Koala", "Panda",
+      "Tiger", "Zebra", "Hippo", "Rhino", "Sloth",
+      "Raccoon", "Otter", "Walrus", "Hedgehog", "Squirrel"
+    ]
+  },
+  "Movies": {
+    "emoji": "🎬",
+    "words": [
+      "Inception", "Titanic", "Jaws", "Avatar", "Gladiator",
+      "Frozen", "Shrek", "Matrix", "Bambi", "Psycho",
+      "Ratatouille", "Ghostbusters", "Rocky", "Dumbo", "Beetlejuice",
+      "Cinderella", "Aladdin", "Tangled", "Moana", "Coco",
+      "Up", "Cars", "Casablanca", "Grease", "Twister",
+      "Jumanji", "Zootopia", "Elf", "Paddington", "Tarzan"
+    ]
+  },
+  "Sports": {
+    "emoji": "⚽",
+    "words": [
+      "Badminton", "Cricket", "Fencing", "Archery", "Bobsled",
+      "Lacrosse", "Polo", "Rugby", "Curling", "Squash",
+      "Surfing", "Volleyball", "Wrestling", "Karate", "Sailing",
+      "Soccer", "Basketball", "Baseball", "Football", "Hockey",
+      "Tennis", "Golf", "Swimming", "Skiing", "Skating",
+      "Boxing", "Cycling", "Bowling", "Climbing", "Gymnastics"
+    ]
+  },
+  "Furniture": {
+    "emoji": "🛋️",
+    "words": [
+      "Ottoman", "Hammock", "Futon", "Wardrobe", "Bookshelf",
+      "Dresser", "Nightstand", "Recliner", "Credenza", "Armoire",
+      "Loveseat", "Vanity", "Hutch", "Chaise", "Stool",
+      "Sofa", "Chair", "Table", "Bed", "Desk",
+      "Bench", "Cabinet", "Couch", "Crib", "Mirror",
+      "Lamp", "Rug", "Bunk Bed", "Coffee Table", "Rocking Chair"
+    ]
+  },
+  "Food": {
+    "emoji": "🍕",
+    "words": [
+      "Sushi", "Pretzel", "Dumpling", "Croissant", "Burrito",
+      "Paella", "Gumbo", "Tiramisu", "Ramen", "Waffle",
+      "Falafel", "Churro", "Bruschetta", "Fondue", "Empanada",
+      "Pizza", "Pasta", "Taco", "Sandwich", "Salad",
+      "Lasagna", "Curry", "Pancake", "Omelet", "Soup",
+      "Burger", "Steak", "Bagel", "Risotto", "Quiche"
+    ]
+  },
+  "Geography": {
+    "emoji": "🗺️",
+    "words": [
+      "Volcano", "Glacier", "Canyon", "Peninsula", "Archipelago",
+      "Tundra", "Fjord", "Delta", "Plateau", "Lagoon",
+      "Savanna", "Crater", "Oasis", "Atoll", "Steppe",
+      "Mountain", "River", "Desert", "Island", "Forest",
+      "Valley", "Beach", "Reef", "Swamp", "Cliff",
+      "Prairie", "Harbor", "Cave", "Waterfall", "Meadow"
+    ]
+  },
+  "Science": {
+    "emoji": "🔬",
+    "words": [
+      "Nebula", "Photon", "Enzyme", "Quasar", "Genome",
+      "Neutron", "Osmosis", "Prism", "Catalyst", "Isotope",
+      "Magnet", "Plasma", "Fossil", "Eclipse", "Parasite",
+      "Atom", "Gravity", "Microscope", "Telescope", "Planet",
+      "Comet", "Meteor", "Molecule", "Cell", "Galaxy",
+      "Orbit", "Laser", "Battery", "Crystal", "Vaccine"
+    ]
+  },
+  "Music": {
+    "emoji": "🎵",
+    "words": [
+      "Guitar", "Piano", "Drums", "Violin", "Trumpet",
+      "Flute", "Saxophone", "Harp", "Banjo", "Cello",
+      "Harmonica", "Tambourine", "Microphone", "Headphones", "Speaker",
+      "Melody", "Rhythm", "Chorus", "Concert", "Orchestra",
+      "Jazz", "Rock", "Country", "Opera", "Karaoke",
+      "Album", "Song", "Choir", "Band", "Symphony"
+    ]
+  },
+  "Technology": {
+    "emoji": "💻",
+    "words": [
+      "Laptop", "Smartphone", "Tablet", "Keyboard", "Monitor",
+      "Printer", "Router", "Camera", "Robot", "Drone",
+      "Headphones", "Charger", "Speaker", "Calculator", "Mouse",
+      "Internet", "Email", "Website", "Password", "Download",
+      "Bluetooth", "Wifi", "Emoji", "Podcast", "Streaming",
+      "Satellite", "Hologram", "Scanner", "Remote", "Antenna"
+    ]
+  },
+  "Travel": {
+    "emoji": "✈️",
+    "words": [
+      "Airplane", "Suitcase", "Passport", "Hotel", "Map",
+      "Camera", "Backpack", "Ticket", "Beach", "Cruise",
+      "Train", "Taxi", "Subway", "Bicycle", "Helicopter",
+      "Paris", "Tokyo", "London", "Rome", "New York",
+      "Safari", "Jungle", "Museum", "Castle", "Pyramid",
+      "Compass", "Sunglasses", "Souvenir", "Postcard", "Lighthouse"
+    ]
+  },
+  "Snacks": {
+    "emoji": "🍿",
+    "words": [
+      "Popcorn", "Chips", "Pretzels", "Cookies", "Crackers",
+      "Peanuts", "Gummy Bears", "Chocolate", "Brownie", "Donut",
+      "Cupcake", "Muffin", "Granola", "Trail Mix", "Jerky",
+      "Nachos", "Pickles", "Yogurt", "Cheese Stick", "Ice Cream",
+      "Lollipop", "Marshmallow", "Cotton Candy", "Candy Cane", "Cereal",
+      "Fruit Snacks", "Pudding", "Smoothie", "Milkshake", "Toast"
+    ]
+  },
+  "Holidays": {
+    "emoji": "🎄",
+    "words": [
+      "Christmas", "Halloween", "Thanksgiving", "Easter", "Hanukkah",
+      "Valentine's Day", "New Year", "Birthday", "Independence Day", "St Patrick's Day",
+      "Mother's Day", "Father's Day", "Labor Day", "Memorial Day", "Earth Day",
+      "Diwali", "Ramadan", "Passover", "Kwanzaa", "Lunar New Year",
+      "April Fools", "Cinco De Mayo", "Oktoberfest", "Mardi Gras", "Groundhog Day",
+      "Veterans Day", "Presidents Day", "Columbus Day", "Flag Day", "Boxing Day"
+    ]
+  }
 }

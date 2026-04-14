@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:words": "node --test --experimental-strip-types --import ./src/lib/game/__tests__/register-hook.mjs src/lib/game/__tests__/words.test.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
