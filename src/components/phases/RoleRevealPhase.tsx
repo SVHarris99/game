@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldAlert, Eye } from "lucide-react";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useGameActions } from "@/hooks/useGameActions";
 import { useCountdown } from "@/hooks/useCountdown";
 import { Timer } from "@/components/ui/Timer";
+import { Button } from "@/components/ui/Button";
+import { CategoryChip } from "@/components/ui/CategoryChip";
+import { bouncySpring } from "@/lib/motion";
 
 export function RoleRevealPhase() {
   const { room, mySecret, isHost } = useRoomContext();
@@ -26,6 +28,8 @@ export function RoleRevealPhase() {
 
   if (!room) return null;
 
+  const isImposter = mySecret?.role === "imposter";
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center">
       <AnimatePresence mode="wait">
@@ -37,7 +41,7 @@ export function RoleRevealPhase() {
             exit={{ opacity: 0, scale: 1.2 }}
             className="text-center"
           >
-            <p className="text-white/50 mb-6 text-lg">
+            <p className="font-display font-semibold text-white/70 mb-6 text-xl uppercase tracking-wide">
               Revealing your role in...
             </p>
             <Timer secondsLeft={secondsLeft} totalSeconds={5} size="lg" />
@@ -45,63 +49,75 @@ export function RoleRevealPhase() {
         ) : (
           <motion.div
             key="reveal"
-            initial={{ opacity: 0, scale: 0.5, rotateY: 180 }}
-            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-            transition={{ type: "spring", duration: 0.8 }}
-            className="text-center max-w-sm w-full"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+            className="text-center max-w-sm w-full px-4"
           >
-            {mySecret?.role === "imposter" ? (
-              <div className="space-y-4">
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                >
-                  <ShieldAlert className="w-16 h-16 text-danger mx-auto" />
-                </motion.div>
-                <div className="bg-danger/10 border border-danger/30 rounded-3xl p-8">
-                  <p className="text-sm text-white/50 mb-1">CATEGORY</p>
-                  <p className="text-2xl font-bold text-white mb-4">
-                    {mySecret.category}
-                  </p>
-                  <p className="text-3xl font-bold text-danger">
-                    YOU ARE THE IMPOSTER
-                  </p>
-                  <p className="text-sm text-white/40 mt-3">
-                    Blend in. Don&apos;t get caught.
-                  </p>
+            {mySecret && !isImposter ? (
+              <div className="space-y-5">
+                <p className="font-display font-semibold text-white/70 text-lg uppercase tracking-wide">
+                  You&apos;re in the know
+                </p>
+
+                <div className="flex justify-center">
+                  <CategoryChip category={mySecret.category} />
                 </div>
-              </div>
-            ) : mySecret ? (
-              <div className="space-y-4">
-                <Eye className="w-16 h-16 text-bright-teal mx-auto" />
-                <div className="bg-bright-teal/10 border border-bright-teal/30 rounded-3xl p-8">
-                  <p className="text-sm text-white/50 mb-1">CATEGORY</p>
-                  <p className="text-2xl font-bold text-white mb-4">
-                    {mySecret.category}
+
+                <motion.div
+                  initial={{ scale: 0, rotate: -12 }}
+                  animate={{ scale: 1, rotate: -2 }}
+                  transition={bouncySpring}
+                  className="sticker-border-thick sticker-shadow-lg rounded-3xl p-8 mx-auto"
+                  style={{ backgroundColor: "var(--color-paper)" }}
+                >
+                  <p className="font-display font-semibold text-ink/60 uppercase text-sm tracking-wider mb-3">
+                    Secret word
                   </p>
-                  <p className="text-sm text-white/50 mb-1">SECRET WORD</p>
-                  <p className="text-4xl font-bold text-bright-teal">
+                  <p className="font-display font-bold text-ink text-5xl leading-tight break-words">
                     {mySecret.word}
                   </p>
-                </div>
+                </motion.div>
+              </div>
+            ) : mySecret && isImposter ? (
+              <div className="space-y-5">
+                <p className="font-display font-semibold text-white/70 text-lg uppercase tracking-wide">
+                  Uh oh...
+                </p>
+
+                <motion.div
+                  initial={{ scale: 0, rotate: 12 }}
+                  animate={{ scale: 1, rotate: 2 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 11,
+                  }}
+                  className="sticker-border-thick sticker-shadow-lg rounded-3xl p-8 mx-auto"
+                  style={{ backgroundColor: "var(--color-danger)" }}
+                >
+                  <p className="font-display font-bold text-white text-4xl uppercase leading-tight">
+                    You&apos;re the imposter
+                  </p>
+                  <p className="mt-4 text-white/90 text-base">
+                    Blend in. Find the category. Don&apos;t get caught.
+                  </p>
+                </motion.div>
               </div>
             ) : (
               <p className="text-white/50">Loading your role...</p>
             )}
 
-            {isHost && (
+            {isHost && mySecret && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2 }}
-                className="mt-8"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2 }}
+                className="mt-10"
               >
-                <button
-                  onClick={handleContinue}
-                  className="bg-bright-teal text-deep-purple font-semibold px-8 py-3 rounded-2xl active:scale-95 transition-transform"
-                >
-                  Start Clue Phase
-                </button>
+                <Button variant="primary" size="lg" onClick={handleContinue}>
+                  Continue
+                </Button>
               </motion.div>
             )}
           </motion.div>

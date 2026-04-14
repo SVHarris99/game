@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Send } from "lucide-react";
 import { useRoomContext } from "@/providers/RoomProvider";
@@ -8,8 +8,20 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useGameActions } from "@/hooks/useGameActions";
 import { useCountdown } from "@/hooks/useCountdown";
 import { Timer } from "@/components/ui/Timer";
-import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { Input } from "@/components/ui/Input";
+import { CategoryChip } from "@/components/ui/CategoryChip";
+import { bouncySpring } from "@/lib/motion";
+import { cn } from "@/lib/utils";
+
+// Cycle clue-card backgrounds by index — visual rhythm, not by speaker.
+const STICKER_COLORS = [
+  "var(--color-sticker-pink)",
+  "var(--color-sticker-blue)",
+  "var(--color-sticker-yellow)",
+  "var(--color-sticker-lime)",
+  "var(--color-sticker-orange)",
+  "var(--color-sticker-violet)",
+];
 
 export function CluePhase() {
   const { room, players } = useRoomContext();
@@ -23,10 +35,10 @@ export function CluePhase() {
   const activePlayerId = room.turnOrder[room.currentTurnIndex];
   const isMyTurn = activePlayerId === user.uid;
   const hasSubmitted = user.uid in room.clues;
+  const activePlayer = players.find((p) => p.id === activePlayerId);
 
   const handleSubmit = async () => {
     if (!clue.trim() || submitting || !isMyTurn) return;
-    // Validate single word
     const trimmed = clue.trim();
     if (trimmed.includes(" ")) return;
     setSubmitting(true);
@@ -40,59 +52,84 @@ export function CluePhase() {
     }
   };
 
+  // Only render clues that have been submitted, in turn order.
+  const submittedEntries = room.turnOrder
+    .map((pid) => {
+      const player = players.find((p) => p.id === pid);
+      const text = room.clues[pid];
+      if (!player || !text) return null;
+      return { pid, player, text };
+    })
+    .filter(<T,>(x: T | null): x is T => x !== null);
+
   return (
     <div className="flex-1 flex flex-col">
-      <div className="text-center mb-6">
-        <p className="text-sm text-white/40 mb-1">Category</p>
-        <p className="text-xl font-bold text-bright-teal">
-          {room.currentCategory}
+      {/* Category hero */}
+      <div className="text-center mb-5">
+        <p className="font-display font-semibold text-white/70 uppercase tracking-wider text-sm mb-2">
+          Category
         </p>
+        <div className="flex justify-center">
+          <CategoryChip
+            category={room.currentCategory}
+            className="text-xl px-5 py-3"
+          />
+        </div>
       </div>
 
-      {/* Clue list */}
-      <div className="flex-1 space-y-2 mb-4 overflow-y-auto">
-        {room.turnOrder.map((pid, idx) => {
-          const player = players.find((p) => p.id === pid);
-          if (!player) return null;
-          const playerClue = room.clues[pid];
-          const isCurrent = idx === room.currentTurnIndex;
-          const isComplete = pid in room.clues;
+      {/* Turn indicator with timer */}
+      <div className="relative flex items-center justify-center mb-5 px-2">
+        <p className="font-display font-semibold text-white text-lg text-center">
+          Turn {room.currentTurnIndex + 1} of {room.turnOrder.length}
+          <span className="block text-white/60 text-base font-medium">
+            {activePlayer ? `${activePlayer.name}'s turn` : "..."}
+          </span>
+        </p>
+        {!hasSubmitted && activePlayerId && (
+          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+            <ClueTimer roomCode={room.code} playerId={activePlayerId} />
+          </div>
+        )}
+      </div>
 
-          return (
-            <motion.div
-              key={pid}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                isCurrent
-                  ? "bg-bright-teal/10 border border-bright-teal/30"
-                  : "bg-purple-mid/30"
-              }`}
-            >
-              <PlayerAvatar
-                name={player.name}
-                color={player.avatarColor}
-                size="sm"
-                isActive={isCurrent}
-              />
-              <span
-                className={`font-medium ${isCurrent ? "text-bright-teal" : "text-white/60"}`}
+      {/* Clue cards list */}
+      <div className="flex-1 space-y-4 mb-5 overflow-y-auto px-1 py-2">
+        {submittedEntries.length === 0 ? (
+          <p className="text-center text-white/40 italic mt-6">
+            No clues yet — waiting for the first clue...
+          </p>
+        ) : (
+          submittedEntries.map((entry, idx) => {
+            const color = STICKER_COLORS[idx % STICKER_COLORS.length];
+            const tiltClass = idx % 2 === 0 ? "tilt-left" : "tilt-right";
+            return (
+              <motion.div
+                key={entry.pid}
+                initial={{ opacity: 0, scale: 0, rotate: -8 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                transition={{
+                  ...bouncySpring,
+                  delay: idx * 0.08,
+                }}
               >
-                {player.name}
-              </span>
-              <span className="ml-auto">
-                {isComplete ? (
-                  <span className="font-bold text-white">{playerClue}</span>
-                ) : isCurrent ? (
-                  <ClueTimer roomCode={room.code} playerId={pid} />
-                ) : (
-                  <span className="text-white/20">...</span>
-                )}
-              </span>
-            </motion.div>
-          );
-        })}
+                <div
+                  className={cn(
+                    "sticker-border sticker-shadow rounded-3xl px-5 py-4",
+                    tiltClass
+                  )}
+                  style={{ backgroundColor: color }}
+                >
+                  <p className="font-display font-medium text-ink text-2xl leading-tight break-words">
+                    &ldquo;{entry.text}&rdquo;
+                  </p>
+                  <p className="mt-2 text-ink/70 text-sm font-medium">
+                    — {entry.player.name}
+                  </p>
+                </div>
+              </motion.div>
+            );
+          })
+        )}
       </div>
 
       {/* Input area */}
@@ -100,13 +137,12 @@ export function CluePhase() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex gap-2"
+          className="flex gap-2 items-stretch"
         >
           <Input
             placeholder="One word clue..."
             value={clue}
             onChange={(e) => {
-              // Only allow single word (no spaces)
               const val = e.target.value.replace(/\s/g, "");
               setClue(val);
             }}
@@ -119,15 +155,29 @@ export function CluePhase() {
           <button
             onClick={handleSubmit}
             disabled={!clue.trim() || submitting}
-            className="bg-bright-teal text-deep-purple p-3 rounded-xl disabled:opacity-50 active:scale-95 transition-transform shrink-0"
+            aria-label="Send clue"
+            className={cn(
+              "shrink-0 flex items-center gap-2 px-5 rounded-2xl",
+              "bg-bright-teal text-ink font-display font-bold uppercase",
+              "sticker-border sticker-shadow-sm sticker-press",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-bright-teal/50"
+            )}
           >
             <Send className="w-5 h-5" />
+            <span>Send</span>
           </button>
         </motion.div>
       )}
 
+      {!isMyTurn && !hasSubmitted && (
+        <p className="text-center text-white/50 text-base font-display font-medium">
+          Waiting for {activePlayer?.name ?? "the current player"} to clue...
+        </p>
+      )}
+
       {hasSubmitted && !isMyTurn && (
-        <p className="text-center text-white/30 text-sm">
+        <p className="text-center text-white/50 text-base font-display font-medium">
           Waiting for other players...
         </p>
       )}
@@ -147,7 +197,6 @@ function ClueTimer({
     duration: 30,
     autoStart: true,
     onComplete: async () => {
-      // Auto-submit "SKIP" if timer runs out (host handles)
       try {
         await submitClue(roomCode, playerId, "---");
       } catch {
@@ -156,7 +205,5 @@ function ClueTimer({
     },
   });
 
-  return (
-    <Timer secondsLeft={secondsLeft} totalSeconds={30} size="sm" />
-  );
+  return <Timer secondsLeft={secondsLeft} totalSeconds={30} size="sm" />;
 }
