@@ -6,9 +6,10 @@ import { useRoomContext } from "@/providers/RoomProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { useGameActions } from "@/hooks/useGameActions";
 import { useDebug, isBot } from "@/hooks/useDebug";
+import { ArrowRight } from "lucide-react";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { Button } from "@/components/ui/Button";
-import { bouncySpring } from "@/lib/motion";
+import { bouncySpring, spring } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const STICKER_BGS = [
@@ -82,9 +83,20 @@ export function VotingPhase() {
   }
 
   const votableCandidates = players.filter((p) => p.id !== user.uid);
+  const isR3 = room.roundNumber === 3;
 
   return (
     <div className="flex-1 flex flex-col items-center w-full">
+      {/* R3 pointing recap (reference data above the ballot) */}
+      {isR3 && (
+        <R3PointingRecap
+          prompts={room.round3Prompts}
+          pointings={room.round3Pointings}
+          players={players}
+          turnOrder={room.turnOrder}
+        />
+      )}
+
       {/* Header sticker */}
       <motion.div
         initial={{ scale: 0, rotate: -8 }}
@@ -191,5 +203,93 @@ export function VotingPhase() {
         </motion.div>
       )}
     </div>
+  );
+}
+
+// --- R3 pointing recap -----------------------------------------------------
+
+interface R3PointingRecapProps {
+  prompts: { insider: string; imposter: string }[];
+  pointings: Record<number, Record<string, string>>;
+  players: { id: string; name: string; avatarColor: string }[];
+  turnOrder: string[];
+}
+
+function R3PointingRecap({
+  prompts,
+  pointings,
+  players,
+  turnOrder,
+}: R3PointingRecapProps) {
+  if (!prompts || prompts.length === 0) return null;
+
+  const lookupPlayer = (id: string) =>
+    players.find((p) => p.id === id) ?? null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={spring}
+      className="w-full max-w-md mb-5"
+    >
+      <p className="font-display font-semibold text-white/60 uppercase tracking-wider text-xs mb-2 text-center">
+        Round 3 Pointings
+      </p>
+      <div className="space-y-1.5">
+        {prompts.map((_, promptIdx) => {
+          const pForPrompt = pointings?.[promptIdx] ?? {};
+          return (
+            <div
+              key={promptIdx}
+              className="flex items-start gap-2 px-2.5 py-1.5 rounded-xl sticker-border"
+              style={{
+                backgroundColor: "var(--color-purple-mid)",
+                color: "#fff",
+              }}
+            >
+              <span className="font-display font-bold text-white/70 uppercase text-[10px] tracking-wide shrink-0 pt-1 w-6">
+                #{promptIdx + 1}
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {turnOrder.map((voterId) => {
+                  const voter = lookupPlayer(voterId);
+                  if (!voter) return null;
+                  const targetId = pForPrompt[voterId];
+                  const target =
+                    targetId && targetId.length > 0
+                      ? lookupPlayer(targetId)
+                      : null;
+                  return (
+                    <span
+                      key={voterId}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/10 text-[11px]"
+                    >
+                      <PlayerAvatar
+                        name={voter.name}
+                        color={voter.avatarColor}
+                        size="sm"
+                      />
+                      <ArrowRight className="w-3 h-3 text-white/60 shrink-0" />
+                      {target ? (
+                        <PlayerAvatar
+                          name={target.name}
+                          color={target.avatarColor}
+                          size="sm"
+                        />
+                      ) : (
+                        <span className="font-display font-semibold italic text-white/50 px-1">
+                          —
+                        </span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
   );
 }

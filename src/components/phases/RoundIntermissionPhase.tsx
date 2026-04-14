@@ -2,17 +2,15 @@
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { updateDoc, serverTimestamp } from "firebase/firestore";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useGameActions } from "@/hooks/useGameActions";
-import { roomRef } from "@/lib/firebase/firestore";
 import { bouncySpring, spring } from "@/lib/motion";
 
 const INTERMISSION_DELAY_MS = 3000;
 
 export function RoundIntermissionPhase() {
   const { room, isHost } = useRoomContext();
-  const { advanceToClue } = useGameActions();
+  const { advanceToClue, advanceToRound3Prompt } = useGameActions();
   const advancedRef = useRef(false);
 
   const roundNumber = room?.roundNumber ?? 0;
@@ -30,11 +28,8 @@ export function RoundIntermissionPhase() {
           // R2 reuses the clue → discussion → voting → results flow.
           await advanceToClue(roomCode);
         } else if (roundNumber === 3) {
-          // R3 enters its own prompt flow (Batch 3 will render the phase).
-          await updateDoc(roomRef(roomCode), {
-            phase: "round3Prompt",
-            phaseStartedAt: serverTimestamp(),
-          });
+          // R3 enters its own prompt flow.
+          await advanceToRound3Prompt(roomCode);
         } else {
           // Defensive fallback — shouldn't happen.
           await advanceToClue(roomCode);
@@ -46,7 +41,7 @@ export function RoundIntermissionPhase() {
     }, INTERMISSION_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [isHost, roomCode, phase, roundNumber, advanceToClue]);
+  }, [isHost, roomCode, phase, roundNumber, advanceToClue, advanceToRound3Prompt]);
 
   if (!room) return null;
 

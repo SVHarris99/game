@@ -501,6 +501,18 @@ export function useGameActions() {
     }
   }, []);
 
+  /**
+   * Host-driven: move from `roundIntermission` into R3's first prompt.
+   * Assumes round-3 setup (prompts, index reset) was already written when
+   * the room advanced to `roundIntermission` via `advanceToRound3`.
+   */
+  const advanceToRound3Prompt = useCallback(async (roomCode: string) => {
+    await updateDoc(roomRef(roomCode), {
+      phase: "round3Prompt",
+      phaseStartedAt: serverTimestamp(),
+    });
+  }, []);
+
   /** Host-driven: after the reveal recap, move to the next prompt. */
   const advanceAfterR3Reveal = useCallback(async (roomCode: string) => {
     const roomSnap = await getDoc(roomRef(roomCode));
@@ -568,6 +580,7 @@ export function useGameActions() {
     advanceToRound3,
     submitPointing,
     advanceR3Prompt,
+    advanceToRound3Prompt,
     advanceAfterR3Reveal,
     leaveRoom,
     endRoom,
