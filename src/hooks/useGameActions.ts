@@ -180,6 +180,30 @@ export function useGameActions() {
     });
   }, []);
 
+  const addBot = useCallback(async (roomCode: string): Promise<void> => {
+    const names = [
+      "Buzz", "Pixel", "Waffles", "Nacho", "Biscuit",
+      "Dizzy", "Pickle", "Noodle", "Zippy", "Muffin",
+      "Scooter", "Sprout", "Bubbles", "Taco", "Mochi",
+    ];
+    const playersSnap = await getDocs(playersCollection(roomCode));
+    const existing = new Set(playersSnap.docs.map((d) => d.data().name));
+    const available = names.filter((n) => !existing.has(n));
+    const pool = available.length > 0 ? available : names;
+    const name = pool[Math.floor(Math.random() * pool.length)];
+    const id = `bot-${Math.random().toString(36).slice(2, 8)}`;
+    const colorIndex = playersSnap.size % AVATAR_COLORS.length;
+
+    await setDoc(playerRef(roomCode, id), {
+      id,
+      name,
+      joinedAt: serverTimestamp(),
+      isHost: false,
+      isConnected: true,
+      avatarColor: AVATAR_COLORS[colorIndex],
+    } as unknown as PlayerDocument);
+  }, []);
+
   const submitClue = useCallback(
     async (roomCode: string, playerId: string, clue: string) => {
       const roomSnap = await getDoc(roomRef(roomCode));
@@ -329,6 +353,7 @@ export function useGameActions() {
   return {
     createRoom,
     joinRoom,
+    addBot,
     startGame,
     advanceToClue,
     submitClue,

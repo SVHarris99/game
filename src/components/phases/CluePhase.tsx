@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Send } from "lucide-react";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { useGameActions } from "@/hooks/useGameActions";
+import { useDebug, isBot } from "@/hooks/useDebug";
 import { useCountdown } from "@/hooks/useCountdown";
 import { Timer } from "@/components/ui/Timer";
 import { Input } from "@/components/ui/Input";
@@ -23,16 +24,46 @@ const STICKER_COLORS = [
   "var(--color-sticker-violet)",
 ];
 
+const BOT_CLUES = [
+  "hmm", "yup", "vibes", "kinda", "sorta", "maybe", "ish", "cool",
+  "cozy", "zoom", "beep", "fluffy", "spicy", "crunchy", "smooth",
+];
+
 export function CluePhase() {
-  const { room, players } = useRoomContext();
+  const { room, players, isHost } = useRoomContext();
   const { user } = useAuth();
   const { submitClue } = useGameActions();
+  const debug = useDebug();
   const [clue, setClue] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const activePlayerId = room?.turnOrder[room.currentTurnIndex];
+  const currentIsBot = !!activePlayerId && isBot(activePlayerId);
+  const clueSubmittedForActive = !!(
+    room && activePlayerId && activePlayerId in room.clues
+  );
+
+  // Host drives bot clues in debug mode
+  useEffect(() => {
+    if (!debug || !isHost || !room || !currentIsBot || clueSubmittedForActive)
+      return;
+    const timer = setTimeout(() => {
+      const fake = BOT_CLUES[Math.floor(Math.random() * BOT_CLUES.length)];
+      submitClue(room.code, activePlayerId, fake).catch(() => {});
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [
+    debug,
+    isHost,
+    room,
+    activePlayerId,
+    currentIsBot,
+    clueSubmittedForActive,
+    submitClue,
+  ]);
+
   if (!room || !user) return null;
 
-  const activePlayerId = room.turnOrder[room.currentTurnIndex];
   const isMyTurn = activePlayerId === user.uid;
   const hasSubmitted = user.uid in room.clues;
   const activePlayer = players.find((p) => p.id === activePlayerId);

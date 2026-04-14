@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { useGameActions } from "@/hooks/useGameActions";
+import { useDebug, isBot } from "@/hooks/useDebug";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { Button } from "@/components/ui/Button";
 import { bouncySpring } from "@/lib/motion";
@@ -23,8 +24,26 @@ export function VotingPhase() {
   const { room, players, isHost } = useRoomContext();
   const { user } = useAuth();
   const { submitVote, revealResults } = useGameActions();
+  const debug = useDebug();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Host drives bot votes in debug mode
+  useEffect(() => {
+    if (!debug || !isHost || !room) return;
+    const bots = players.filter((p) => isBot(p.id) && !(p.id in room.votes));
+    if (bots.length === 0) return;
+    const timer = setTimeout(() => {
+      for (const bot of bots) {
+        const candidates = players.filter((p) => p.id !== bot.id);
+        if (candidates.length === 0) continue;
+        const target =
+          candidates[Math.floor(Math.random() * candidates.length)];
+        submitVote(room.code, bot.id, target.id).catch(() => {});
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [debug, isHost, room, players, submitVote]);
 
   if (!room || !user) return null;
 

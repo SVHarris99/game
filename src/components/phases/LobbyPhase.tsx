@@ -1,10 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Play } from "lucide-react";
+import { Play, Bot } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useGameActions } from "@/hooks/useGameActions";
+import { useDebug } from "@/hooks/useDebug";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
@@ -13,10 +14,12 @@ import { useSfx } from "@/lib/sfx/useSfx";
 
 export function LobbyPhase() {
   const { room, players, isHost } = useRoomContext();
-  const { startGame } = useGameActions();
+  const { startGame, addBot } = useGameActions();
+  const debug = useDebug();
   const { play } = useSfx();
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [addingBot, setAddingBot] = useState(false);
   const prevPlayerCountRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -39,6 +42,18 @@ export function LobbyPhase() {
       setTimeout(() => setCopied(false), 1800);
     } catch (err) {
       console.error("Failed to copy code:", err);
+    }
+  };
+
+  const handleAddBot = async () => {
+    if (!room || addingBot) return;
+    setAddingBot(true);
+    try {
+      await addBot(room.code);
+    } catch (err) {
+      console.error("Failed to add bot:", err);
+    } finally {
+      setAddingBot(false);
     }
   };
 
@@ -133,6 +148,22 @@ export function LobbyPhase() {
           ))}
         </div>
       </div>
+
+      {/* Debug: add-bot button (host-only, ?debug=1) */}
+      {debug && isHost && players.length < 8 && (
+        <div className="w-full max-w-sm mb-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full inline-flex items-center justify-center gap-2"
+            onClick={handleAddBot}
+            disabled={addingBot}
+          >
+            <Bot className="w-4 h-4" />
+            {addingBot ? "Adding bot..." : "Add bot player"}
+          </Button>
+        </div>
+      )}
 
       {/* Start button / waiting state */}
       <div className="w-full max-w-sm mt-auto">
