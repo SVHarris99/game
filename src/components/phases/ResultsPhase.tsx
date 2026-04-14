@@ -110,7 +110,7 @@ export function ResultsPhase() {
     : `Round ${currentRoundNumber} — Imposter Escaped`;
 
   return (
-    <div className="flex-1 flex flex-col items-center w-full overflow-hidden">
+    <div className="flex-1 flex flex-col items-center w-full overflow-y-auto overflow-x-hidden pb-6">
       <Confetti trigger={imposterCaught} />
 
       {/* Rubber-stamp reveal */}
@@ -303,16 +303,31 @@ export function ResultsPhase() {
             </>
           )}
           {actionError && (
-            <p
+            <motion.div
               role="alert"
-              className="font-display font-semibold text-sm text-center px-3 py-2 rounded-lg"
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={bouncySpring}
+              className="mt-2 px-4 py-3 rounded-xl sticker-border-thick sticker-shadow text-center"
               style={{
-                backgroundColor: "rgba(239, 68, 68, 0.15)",
-                color: "#fecaca",
+                backgroundColor: "#ef4444",
+                color: "#fff",
               }}
             >
-              {actionError}
-            </p>
+              <p className="font-display font-bold uppercase tracking-wide text-xs opacity-90 mb-1">
+                Something went wrong
+              </p>
+              <p className="font-display font-semibold text-sm break-words">
+                {actionError}
+              </p>
+              <button
+                type="button"
+                onClick={() => setActionError(null)}
+                className="mt-2 font-display font-bold uppercase text-xs underline opacity-90 hover:opacity-100"
+              >
+                Dismiss
+              </button>
+            </motion.div>
           )}
         </motion.div>
       )}

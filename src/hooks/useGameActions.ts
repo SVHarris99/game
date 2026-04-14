@@ -334,18 +334,71 @@ export function useGameActions() {
 
   const playAgain = useCallback(
     async (roomCode: string, players: PlayerDocument[]) => {
-      // Clear old secrets
-      const secretsDocs = await getDocs(secretsCollection(roomCode));
+      if (players.length < 3) throw new Error("Need at least 3 players");
+
+      // Read current state + existing secrets in parallel.
+      const [roomSnap, secretsDocs] = await Promise.all([
+        getDoc(roomRef(roomCode)),
+        getDocs(secretsCollection(roomCode)),
+      ]);
+      const room = roomSnap.data();
+
+      // Select a fresh word (avoiding any used so far) and assign roles.
+      const usedWords = room?.roundHistory.map((r) => r.word) ?? [];
+      const { category, word } = selectWord(usedWords);
+      const { imposterId, secrets } = assignRoles(players, category, word);
+
+      // Atomic: delete old secrets + write new secrets + reset room — all in
+      // one batch. This avoids a race where the delete lands but the
+      // subsequent `set` is interpreted as an update (which is disallowed by
+      // the security rules `allow update: if false` on /secrets).
       const batch = writeBatch(getFirestoreDb());
       for (const d of secretsDocs.docs) {
         batch.delete(d.ref);
       }
+      for (const [pid, secretData] of secrets) {
+        batch.set(secretRef(roomCode, pid), secretData);
+      }
+
+      const turnOrder = [...players]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((p) => p.id);
+
+      // Fresh match → reset cumulative scores.
+      const scores: Record<string, number> = {};
+      for (const p of players) scores[p.id] = 0;
+
+      batch.update(roomRef(roomCode), {
+        phase: "roleReveal",
+        phaseStartedAt: serverTimestamp(),
+        currentCategory: category,
+        currentWord: "",
+        turnOrder,
+        currentTurnIndex: 0,
+        clues: {},
+        votes: {},
+        votingComplete: false,
+        scores,
+        imposterId: "",
+        roundNumber: 1,
+        roundHistory: [],
+        status: "active",
+        isFinalResults: false,
+        round3Prompts: [],
+        round3Pointings: {},
+        round3CurrentPromptIndex: 0,
+      });
+
       await batch.commit();
 
-      // Start new round (reuses startGame)
-      await startGame(roomCode, players);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(
+          `game-${roomCode}-secret`,
+          JSON.stringify({ imposterId, word })
+        );
+      }
     },
-    [startGame]
+    []
   );
 
   const backToLobby = useCallback(async (roomCode: string) => {
