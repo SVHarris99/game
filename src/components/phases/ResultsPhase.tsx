@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useGameActions } from "@/hooks/useGameActions";
@@ -8,16 +9,27 @@ import { Button } from "@/components/ui/Button";
 import { Confetti } from "@/components/ui/Confetti";
 import { bouncySpring, spring } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { useSfx } from "@/lib/sfx/useSfx";
 
 export function ResultsPhase() {
   const { room, players, isHost } = useRoomContext();
   const { playAgain, backToLobby } = useGameActions();
+  const { play } = useSfx();
+  const playedRef = useRef(false);
+
+  const latestRound = room?.roundHistory[room.roundHistory.length - 1];
+  const imposterCaught = latestRound?.imposterCaught ?? false;
+
+  useEffect(() => {
+    if (!room) return;
+    if (playedRef.current) return;
+    playedRef.current = true;
+    play(imposterCaught ? "correct" : "wrong");
+  }, [room, imposterCaught, play]);
 
   if (!room) return null;
 
-  const latestRound = room.roundHistory[room.roundHistory.length - 1];
   const imposter = players.find((p) => p.id === room.imposterId);
-  const imposterCaught = latestRound?.imposterCaught ?? false;
 
   // Sort players by score
   const sortedPlayers = [...players].sort(

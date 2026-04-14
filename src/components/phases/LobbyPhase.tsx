@@ -2,19 +2,31 @@
 
 import { motion } from "framer-motion";
 import { Play } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useGameActions } from "@/hooks/useGameActions";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { bouncySpring } from "@/lib/motion";
+import { useSfx } from "@/lib/sfx/useSfx";
 
 export function LobbyPhase() {
   const { room, players, isHost } = useRoomContext();
   const { startGame } = useGameActions();
+  const { play } = useSfx();
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
+  const prevPlayerCountRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const prev = prevPlayerCountRef.current;
+    // Skip the initial mount (even if list is non-empty on join).
+    if (prev !== null && players.length > prev) {
+      play("join");
+    }
+    prevPlayerCountRef.current = players.length;
+  }, [players.length, play]);
 
   if (!room) return null;
 

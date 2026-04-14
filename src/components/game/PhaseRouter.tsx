@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import { LobbyPhase } from "@/components/phases/LobbyPhase";
@@ -8,9 +9,22 @@ import { CluePhase } from "@/components/phases/CluePhase";
 import { DiscussionPhase } from "@/components/phases/DiscussionPhase";
 import { VotingPhase } from "@/components/phases/VotingPhase";
 import { ResultsPhase } from "@/components/phases/ResultsPhase";
+import { useSfx } from "@/lib/sfx/useSfx";
 
 export function PhaseRouter() {
   const { room } = useRoomContext();
+  const { play } = useSfx();
+  const prevPhaseRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!room) return;
+    const prev = prevPhaseRef.current;
+    if (prev !== null && prev !== room.phase) {
+      play("phase");
+    }
+    prevPhaseRef.current = room.phase;
+  }, [room, play]);
+
   if (!room) return null;
 
   return (
