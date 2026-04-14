@@ -19,13 +19,14 @@ export function Button({
   return (
     <button
       className={cn(
-        "font-semibold rounded-2xl transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
+        "font-display font-semibold rounded-2xl sticker-border sticker-shadow-sm sticker-press",
+        "disabled:opacity-50 disabled:cursor-not-allowed",
+        "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-bright-teal/50",
         {
-          "bg-bright-teal text-deep-purple hover:bg-teal-dim":
-            variant === "primary",
-          "bg-purple-mid text-white hover:bg-purple-light border border-white/10":
+          "bg-bright-teal text-ink hover:bg-teal-dim": variant === "primary",
+          "bg-sticker-yellow text-ink hover:brightness-95":
             variant === "secondary",
-          "bg-danger text-white hover:bg-danger/80": variant === "danger",
+          "bg-danger text-white hover:bg-danger/90": variant === "danger",
           "bg-transparent text-white hover:bg-white/10": variant === "ghost",
         },
         {

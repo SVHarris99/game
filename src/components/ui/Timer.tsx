@@ -8,6 +8,13 @@ interface TimerProps {
   size?: "sm" | "lg";
 }
 
+/**
+ * Timer — sticker-styled circular countdown badge.
+ *
+ * Backgrounds:
+ *  - size="sm": cream (`--color-paper`) interior, ink text → sticker badge look.
+ *  - size="lg": keeps the darker purple interior for readability at large sizes.
+ */
 export function Timer({ secondsLeft, totalSeconds, size = "lg" }: TimerProps) {
   const progress = secondsLeft / totalSeconds;
   const isUrgent = secondsLeft <= 10;
@@ -21,12 +28,22 @@ export function Timer({ secondsLeft, totalSeconds, size = "lg" }: TimerProps) {
       ? `${minutes}:${secs.toString().padStart(2, "0")}`
       : `${secs}`;
 
+  const isSmall = size === "sm";
+
   return (
     <div
-      className={cn("relative flex items-center justify-center", {
-        "w-20 h-20": size === "sm",
-        "w-32 h-32": size === "lg",
-      })}
+      className={cn(
+        "relative flex items-center justify-center rounded-full sticker-border sticker-shadow-sm",
+        {
+          "w-20 h-20": isSmall,
+          "w-32 h-32": !isSmall,
+        }
+      )}
+      style={{
+        backgroundColor: isSmall
+          ? "var(--color-paper)"
+          : "var(--color-purple-light)",
+      }}
     >
       <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
         {/* Background ring */}
@@ -37,7 +54,7 @@ export function Timer({ secondsLeft, totalSeconds, size = "lg" }: TimerProps) {
           fill="none"
           stroke="currentColor"
           strokeWidth="4"
-          className="text-white/10"
+          className={cn(isSmall ? "text-ink/10" : "text-white/10")}
         />
         {/* Progress ring */}
         <circle
@@ -57,11 +74,12 @@ export function Timer({ secondsLeft, totalSeconds, size = "lg" }: TimerProps) {
         />
       </svg>
       <span
-        className={cn("font-bold tabular-nums", {
-          "text-xl": size === "sm",
-          "text-4xl": size === "lg",
+        className={cn("font-display font-bold tabular-nums", {
+          "text-xl": isSmall,
+          "text-4xl": !isSmall,
           "text-danger": isUrgent,
-          "text-white": !isUrgent,
+          "text-ink": !isUrgent && isSmall,
+          "text-white": !isUrgent && !isSmall,
         })}
       >
         {display}
