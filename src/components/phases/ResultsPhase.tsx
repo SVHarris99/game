@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useRoomContext } from "@/providers/RoomProvider";
 import { useGameActions } from "@/hooks/useGameActions";
@@ -16,6 +16,10 @@ export function ResultsPhase() {
   const { playAgain, backToLobby } = useGameActions();
   const { play } = useSfx();
   const playedRef = useRef(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionPending, setActionPending] = useState<
+    "playAgain" | "lobby" | null
+  >(null);
 
   const latestRound = room?.roundHistory[room.roundHistory.length - 1];
   const imposterCaught = latestRound?.imposterCaught ?? false;
@@ -37,11 +41,33 @@ export function ResultsPhase() {
   );
 
   const handlePlayAgain = async () => {
-    await playAgain(room.code, players);
+    setActionError(null);
+    setActionPending("playAgain");
+    try {
+      await playAgain(room.code, players);
+    } catch (err) {
+      console.error("playAgain failed", err);
+      const msg =
+        err instanceof Error ? err.message : "Could not start the next round.";
+      setActionError(msg);
+    } finally {
+      setActionPending(null);
+    }
   };
 
   const handleBackToLobby = async () => {
-    await backToLobby(room.code);
+    setActionError(null);
+    setActionPending("lobby");
+    try {
+      await backToLobby(room.code);
+    } catch (err) {
+      console.error("backToLobby failed", err);
+      const msg =
+        err instanceof Error ? err.message : "Could not return to the lobby.";
+      setActionError(msg);
+    } finally {
+      setActionPending(null);
+    }
   };
 
   const stampRotation = imposterCaught ? -6 : 8;
@@ -191,21 +217,37 @@ export function ResultsPhase() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.6 }}
-          className="w-full max-w-sm flex gap-3"
+          className="w-full max-w-sm flex flex-col gap-2"
         >
-          <Button
-            variant="secondary"
-            className="flex-1 font-display font-bold uppercase"
-            onClick={handleBackToLobby}
-          >
-            Lobby
-          </Button>
-          <Button
-            className="flex-1 font-display font-bold uppercase"
-            onClick={handlePlayAgain}
-          >
-            Play Again
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              className="flex-1 font-display font-bold uppercase"
+              onClick={handleBackToLobby}
+              disabled={actionPending !== null}
+            >
+              {actionPending === "lobby" ? "Returning…" : "Lobby"}
+            </Button>
+            <Button
+              className="flex-1 font-display font-bold uppercase"
+              onClick={handlePlayAgain}
+              disabled={actionPending !== null}
+            >
+              {actionPending === "playAgain" ? "Starting…" : "Play Again"}
+            </Button>
+          </div>
+          {actionError && (
+            <p
+              role="alert"
+              className="font-display font-semibold text-sm text-center px-3 py-2 rounded-lg"
+              style={{
+                backgroundColor: "rgba(239, 68, 68, 0.15)",
+                color: "#fecaca",
+              }}
+            >
+              {actionError}
+            </p>
+          )}
         </motion.div>
       )}
 
