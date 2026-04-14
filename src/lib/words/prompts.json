@@ -1,0 +1,24 @@
+{
+  "pairs": [
+    { "insider": "Point at the fastest person in the room", "imposter": "Point at the slowest person in the room" },
+    { "insider": "Point at the tallest person in the room", "imposter": "Point at the shortest person in the room" },
+    { "insider": "Point at who's most likely to cry at a movie", "imposter": "Point at who's the most stoic" },
+    { "insider": "Point at the best dancer", "imposter": "Point at the worst dancer" },
+    { "insider": "Point at the early bird", "imposter": "Point at the night owl" },
+    { "insider": "Point at who'd survive a zombie apocalypse", "imposter": "Point at who gets caught first" },
+    { "insider": "Point at the loudest person", "imposter": "Point at the quietest person" },
+    { "insider": "Point at the biggest foodie", "imposter": "Point at the pickiest eater" },
+    { "insider": "Point at the most organized person", "imposter": "Point at the most chaotic person" },
+    { "insider": "Point at the most competitive person", "imposter": "Point at the most chill person" },
+    { "insider": "Point at who'd start a business", "imposter": "Point at who's the most risk-averse" },
+    { "insider": "Point at who gets the joke first", "imposter": "Point at who gets the joke last" },
+    { "insider": "Point at the best singer", "imposter": "Point at the worst singer" },
+    { "insider": "Point at the biggest gossip", "imposter": "Point at the best secret keeper" },
+    { "insider": "Point at who texts back instantly", "imposter": "Point at who ghosts for a week" },
+    { "insider": "Point at the road-tripper", "imposter": "Point at who always flies" },
+    { "insider": "Point at the loudest laugh", "imposter": "Point at the quiet smile" },
+    { "insider": "Point at who's first on the dance floor", "imposter": "Point at who's last off it" },
+    { "insider": "Point at who's most likely to break something", "imposter": "Point at the most careful" },
+    { "insider": "Point at who'd adopt a stray animal", "imposter": "Point at the most practical" }
+  ]
+}

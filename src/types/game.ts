@@ -6,9 +6,17 @@ export type GamePhase =
   | "clue"
   | "discussion"
   | "voting"
-  | "results";
+  | "results"
+  | "roundIntermission"
+  | "round3Prompt"
+  | "round3Reveal";
 
 export type PlayerRole = "insider" | "imposter";
+
+export interface PromptPair {
+  insider: string;
+  imposter: string;
+}
 
 export interface RoundResult {
   round: number;
@@ -16,6 +24,7 @@ export interface RoundResult {
   word: string;
   imposterId: string;
   votes: Record<string, string>;
+  clues: Record<string, string>;
   imposterCaught: boolean;
   scoreDeltas: Record<string, number>;
 }
@@ -38,6 +47,10 @@ export interface RoomDocument {
   roundNumber: number;
   roundHistory: RoundResult[];
   status: "waiting" | "active" | "finished";
+  isFinalResults: boolean;
+  round3Prompts: PromptPair[];
+  round3Pointings: Record<number, Record<string, string>>;
+  round3CurrentPromptIndex: number;
 }
 
 export interface PlayerDocument {

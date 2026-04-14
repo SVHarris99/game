@@ -20,6 +20,7 @@ import {
 } from "@/lib/firebase/firestore";
 import { generateRoomCode } from "@/lib/utils";
 import { selectWord } from "@/lib/game/words";
+import { selectPrompts } from "@/lib/game/prompts";
 import { assignRoles } from "@/lib/game/roles";
 import { calculateRoundScores } from "@/lib/game/scoring";
 import { AVATAR_COLORS } from "@/types/game";
@@ -60,6 +61,10 @@ export function useGameActions() {
         roundNumber: 0,
         roundHistory: [],
         status: "waiting",
+        isFinalResults: false,
+        round3Prompts: [],
+        round3Pointings: {},
+        round3CurrentPromptIndex: 0,
       };
 
       await setDoc(roomRef(code), roomData);
@@ -210,6 +215,17 @@ export function useGameActions() {
       const room = roomSnap.data();
       if (!room) throw new Error("Room not found");
 
+      // R2 no-repeat gate (client-side only; a motivated cheater could bypass).
+      if (room.roundNumber === 2 && room.roundHistory.length > 0) {
+        const r1Clue = room.roundHistory[0]?.clues?.[playerId];
+        if (
+          r1Clue &&
+          r1Clue.trim().toLowerCase() === clue.trim().toLowerCase()
+        ) {
+          throw new Error("Can't reuse your Round 1 clue");
+        }
+      }
+
       const newClues = { ...room.clues, [playerId]: clue };
       const nextTurnIndex = room.currentTurnIndex + 1;
       const allDone = nextTurnIndex >= room.turnOrder.length;
@@ -289,6 +305,7 @@ export function useGameActions() {
         word,
         imposterId,
         votes: room.votes,
+        clues: room.clues,
         imposterCaught,
         scoreDeltas: deltas,
       };
@@ -345,8 +362,184 @@ export function useGameActions() {
       roundHistory: [],
       scores: {},
       status: "waiting",
+      isFinalResults: false,
+      round3Prompts: [],
+      round3Pointings: {},
+      round3CurrentPromptIndex: 0,
     });
 
+    await batch.commit();
+  }, []);
+
+  // --- Multi-round advancement ------------------------------------------
+  // NOTE: the secret word + imposter ID are stashed in the host's
+  // sessionStorage by `startGame`. The secret doesn't change across rounds in
+  // a single match, so we do NOT re-write it on round advances — the host
+  // client still has the original value to reveal at each round's results.
+
+  const advanceToRound2 = useCallback(async (roomCode: string) => {
+    const roomSnap = await getDoc(roomRef(roomCode));
+    const room = roomSnap.data();
+    if (!room) throw new Error("Room not found");
+    if (room.phase !== "results") {
+      throw new Error("Cannot advance to Round 2 from current phase");
+    }
+    const last = room.roundHistory[room.roundHistory.length - 1];
+    if (!last || last.imposterCaught) {
+      throw new Error("Round 2 only plays when imposter escaped");
+    }
+    if (room.roundNumber !== 1) {
+      throw new Error("advanceToRound2 requires roundNumber === 1");
+    }
+
+    await updateDoc(roomRef(roomCode), {
+      phase: "roundIntermission",
+      phaseStartedAt: serverTimestamp(),
+      turnOrder: [...room.turnOrder].reverse(),
+      currentTurnIndex: 0,
+      clues: {},
+      votes: {},
+      votingComplete: false,
+      imposterId: "", // hidden again during active play
+      currentWord: "", // hidden again during active play
+      roundNumber: 2,
+    });
+  }, []);
+
+  const advanceToRound3 = useCallback(async (roomCode: string) => {
+    const roomSnap = await getDoc(roomRef(roomCode));
+    const room = roomSnap.data();
+    if (!room) throw new Error("Room not found");
+    if (room.phase !== "results") {
+      throw new Error("Cannot advance to Round 3 from current phase");
+    }
+    const last = room.roundHistory[room.roundHistory.length - 1];
+    if (!last || last.imposterCaught) {
+      throw new Error("Round 3 only plays when imposter escaped");
+    }
+    if (room.roundNumber !== 2) {
+      throw new Error("advanceToRound3 requires roundNumber === 2");
+    }
+
+    await updateDoc(roomRef(roomCode), {
+      phase: "roundIntermission",
+      phaseStartedAt: serverTimestamp(),
+      // turnOrder unchanged from R2
+      currentTurnIndex: 0,
+      clues: {},
+      votes: {},
+      votingComplete: false,
+      imposterId: "",
+      currentWord: "",
+      roundNumber: 3,
+      round3Prompts: selectPrompts(3),
+      round3CurrentPromptIndex: 0,
+      round3Pointings: {},
+    });
+  }, []);
+
+  // --- Round 3 pointing --------------------------------------------------
+
+  const submitPointing = useCallback(
+    async (
+      roomCode: string,
+      playerId: string,
+      promptIndex: number,
+      targetId: string | null
+    ) => {
+      const roomSnap = await getDoc(roomRef(roomCode));
+      const room = roomSnap.data();
+      if (!room) throw new Error("Room not found");
+
+      const existing = room.round3Pointings ?? {};
+      const forPrompt = { ...(existing[promptIndex] ?? {}) };
+      // Firestore doesn't allow `null` values nicely in nested maps; store as
+      // empty string to represent "no pick".
+      forPrompt[playerId] = targetId ?? "";
+
+      const nextPointings = { ...existing, [promptIndex]: forPrompt };
+      await updateDoc(roomRef(roomCode), {
+        round3Pointings: nextPointings,
+      });
+    },
+    []
+  );
+
+  /**
+   * Host-driven: called once the current prompt's pointing window has
+   * completed (all players pointed or timer expired).
+   * - If more prompts remain → transition to `round3Reveal` for a brief recap.
+   * - If the just-completed prompt was the last one → transition to `voting`
+   *   for the final vote.
+   */
+  const advanceR3Prompt = useCallback(async (roomCode: string) => {
+    const roomSnap = await getDoc(roomRef(roomCode));
+    const room = roomSnap.data();
+    if (!room) throw new Error("Room not found");
+
+    const idx = room.round3CurrentPromptIndex ?? 0;
+    if (idx >= 2) {
+      // All 3 prompts done → final vote.
+      await updateDoc(roomRef(roomCode), {
+        phase: "voting",
+        phaseStartedAt: serverTimestamp(),
+      });
+    } else {
+      await updateDoc(roomRef(roomCode), {
+        phase: "round3Reveal",
+        phaseStartedAt: serverTimestamp(),
+      });
+    }
+  }, []);
+
+  /** Host-driven: after the reveal recap, move to the next prompt. */
+  const advanceAfterR3Reveal = useCallback(async (roomCode: string) => {
+    const roomSnap = await getDoc(roomRef(roomCode));
+    const room = roomSnap.data();
+    if (!room) throw new Error("Room not found");
+
+    const nextIdx = (room.round3CurrentPromptIndex ?? 0) + 1;
+    await updateDoc(roomRef(roomCode), {
+      phase: "round3Prompt",
+      phaseStartedAt: serverTimestamp(),
+      round3CurrentPromptIndex: nextIdx,
+    });
+  }, []);
+
+  // --- Room teardown -----------------------------------------------------
+
+  /**
+   * Remove a single player (and their secret) from a room.
+   * If the leaving player is the host, the UI should call `endRoom` instead;
+   * this function does not detect/guard that case.
+   */
+  const leaveRoom = useCallback(
+    async (roomCode: string, playerId: string) => {
+      try {
+        await deleteDoc(playerRef(roomCode, playerId));
+      } catch {
+        // ignore not-found
+      }
+      try {
+        await deleteDoc(secretRef(roomCode, playerId));
+      } catch {
+        // secret may not exist; ignore
+      }
+    },
+    []
+  );
+
+  /** Host-only: tear down the entire room (players, secrets, room doc). */
+  const endRoom = useCallback(async (roomCode: string) => {
+    const db = getFirestoreDb();
+
+    const playersSnap = await getDocs(playersCollection(roomCode));
+    const secretsSnap = await getDocs(secretsCollection(roomCode));
+
+    const batch = writeBatch(db);
+    for (const d of playersSnap.docs) batch.delete(d.ref);
+    for (const d of secretsSnap.docs) batch.delete(d.ref);
+    batch.delete(roomRef(roomCode));
     await batch.commit();
   }, []);
 
@@ -362,5 +555,12 @@ export function useGameActions() {
     revealResults,
     playAgain,
     backToLobby,
+    advanceToRound2,
+    advanceToRound3,
+    submitPointing,
+    advanceR3Prompt,
+    advanceAfterR3Reveal,
+    leaveRoom,
+    endRoom,
   };
 }

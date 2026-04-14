@@ -30,6 +30,9 @@ const transitions: Record<GamePhase, Partial<Record<Trigger, GamePhase>>> = {
     playAgain: "roleReveal",
     backToLobby: "lobby",
   },
+  roundIntermission: {},
+  round3Prompt: {},
+  round3Reveal: {},
 };
 
 export function getNextPhase(
