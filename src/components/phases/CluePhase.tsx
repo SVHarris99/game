@@ -72,7 +72,6 @@ export function CluePhase() {
   const handleSubmit = async () => {
     if (!clue.trim() || submitting || !isMyTurn) return;
     const trimmed = clue.trim();
-    if (trimmed.includes(" ")) return;
     setSubmitting(true);
     setRepeatError(null);
     try {
@@ -198,14 +197,13 @@ export function CluePhase() {
           )}
           <div className="flex gap-2 items-stretch">
             <Input
-              placeholder={isR2 ? "Fresh one-word clue..." : "One word clue..."}
+              placeholder={isR2 ? "Fresh clue..." : "Your clue..."}
               value={clue}
               onChange={(e) => {
-                const val = e.target.value.replace(/\s/g, "");
-                setClue(val);
+                setClue(e.target.value);
                 if (repeatError) setRepeatError(null);
               }}
-              maxLength={20}
+              maxLength={40}
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleSubmit();

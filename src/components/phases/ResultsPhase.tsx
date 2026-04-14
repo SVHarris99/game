@@ -270,17 +270,37 @@ export function ResultsPhase() {
               </Button>
             </div>
           ) : (
-            <Button
-              className="w-full font-display font-bold uppercase"
-              onClick={handleStartNextRound}
-              disabled={actionPending !== null}
-            >
-              {actionPending === "nextRound"
-                ? "Starting…"
-                : currentRoundNumber === 1
-                  ? "Start Round 2"
-                  : "Start Round 3"}
-            </Button>
+            <>
+              <Button
+                className="w-full font-display font-bold uppercase"
+                onClick={handleStartNextRound}
+                disabled={actionPending !== null}
+              >
+                {actionPending === "nextRound"
+                  ? "Starting…"
+                  : currentRoundNumber === 1
+                    ? "Start Round 2"
+                    : "Start Round 3"}
+              </Button>
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  className="flex-1 font-display font-bold uppercase"
+                  onClick={handleBackToLobby}
+                  disabled={actionPending !== null}
+                >
+                  {actionPending === "lobby" ? "Returning…" : "Lobby"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex-1 font-display font-bold uppercase"
+                  onClick={handlePlayAgain}
+                  disabled={actionPending !== null}
+                >
+                  {actionPending === "playAgain" ? "Starting…" : "New Match"}
+                </Button>
+              </div>
+            </>
           )}
           {actionError && (
             <p
